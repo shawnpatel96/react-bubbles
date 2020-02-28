@@ -1,5 +1,7 @@
 import React, { useState } from "react";
 import axios from "axios";
+import axiosWithAuth from"../utils/axiosWithAuth"
+import { useParams } from "react-router-dom";
 
 const initialColor = {
   color: "",
@@ -10,6 +12,7 @@ const ColorList = ({ colors, updateColors }) => {
   console.log(colors);
   const [editing, setEditing] = useState(false);
   const [colorToEdit, setColorToEdit] = useState(initialColor);
+  const {id}= useParams();
 
   const editColor = color => {
     setEditing(true);
@@ -21,11 +24,32 @@ const ColorList = ({ colors, updateColors }) => {
     // Make a put request to save your updated color
     // think about where will you get the id from...
     // where is is saved right now?
+    axiosWithAuth()
+    .put(`/api/colors/${colorToEdit.id}`, colorToEdit)
+    .then(res=>{
+      console.log("this is res from put in colorlist", res)
+      const newColors=[...colors]
+      newColors[colors.findIndex((color)=>color.id===res.data.id)] = res.data
+    })
+    .catch(err=>{
+      console.log("this is error from put in color list", err)
+    })
+    
   };
 
   const deleteColor = color => {
     // make a delete request to delete this color
+    axiosWithAuth().delete(`http://localhost:5000/api/colors/${color.id}`)
+    .then(res=>{
+      console.log('this is res from delete in colorlist', res)
+      updateColors(colors=>colors.filter(index=> (index.id !== color.id)));
+    })
+    .catch(err=>{
+      console.log('this is err from delete in color list', err)
+    })
   };
+
+ 
 
   return (
     <div className="colors-wrap">
@@ -39,7 +63,7 @@ const ColorList = ({ colors, updateColors }) => {
                     deleteColor(color)
                   }
                 }>
-                  x
+                  x delete color
               </span>{" "}
               {color.color}
             </span>
