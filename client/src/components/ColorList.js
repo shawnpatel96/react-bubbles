@@ -14,13 +14,39 @@ const ColorList = ({ colors, updateColors }) => {
   const [colorToEdit, setColorToEdit] = useState(initialColor);
   const {id}= useParams();
 
+  const [newColor, setNewColor]= useState(initialColor)
+
+  const addColor =(e) =>{
+    axiosWithAuth()
+    .post('/api/colors', newColor)
+    .then(res=>{
+      console.log("this is add color from colorlist", res)
+      updateColors([...colors, newColor])
+    })
+    .catch(err=>{
+      console.log("this is error from add color in color list", err)
+    })
+
+  }
+  const handleNewColor= e =>{
+    const value= e.target.value
+    setNewColor({
+      ...newColor,
+      color:value,
+      code:{
+   
+        hex: value
+      }
+      
+    })
+  }
   const editColor = color => {
     setEditing(true);
     setColorToEdit(color);
   };
 
   const saveEdit = e => {
-    e.preventDefault();
+    // e.preventDefault();
     // Make a put request to save your updated color
     // think about where will you get the id from...
     // where is is saved right now?
@@ -28,8 +54,14 @@ const ColorList = ({ colors, updateColors }) => {
     .put(`/api/colors/${colorToEdit.id}`, colorToEdit)
     .then(res=>{
       console.log("this is res from put in colorlist", res)
-      const newColors=[...colors]
-      newColors[colors.findIndex((color)=>color.id===res.data.id)] = res.data
+      axiosWithAuth()
+      .get(`http://localhost:5000/api/colors/`)
+      .then(res=>{
+        updateColors(res.data)
+      })
+      .catch(error=> console.log(error))
+      // const newColors=[...colors]
+      // newColors[colors.findIndex((color)=>color.id===res.data.id)] = res.data
     })
     .catch(err=>{
       console.log("this is error from put in color list", err)
@@ -39,10 +71,15 @@ const ColorList = ({ colors, updateColors }) => {
 
   const deleteColor = color => {
     // make a delete request to delete this color
-    axiosWithAuth().delete(`http://localhost:5000/api/colors/${color.id}`)
+    axiosWithAuth()
+    .delete(`http://localhost:5000/api/colors/${color.id}`)
     .then(res=>{
       console.log('this is res from delete in colorlist', res)
-      updateColors(colors=>colors.filter(index=> (index.id !== color.id)));
+      axiosWithAuth()
+      .get(`http://localhost:5000/api/colors/`)
+      .then(res=>{
+        updateColors(res.data)
+      })
     })
     .catch(err=>{
       console.log('this is err from delete in color list', err)
@@ -53,6 +90,15 @@ const ColorList = ({ colors, updateColors }) => {
 
   return (
     <div className="colors-wrap">
+      {/* stretch - build another form here to add a color */}
+      <form onSubmit={addColor}>
+        <div>
+          <input name="name" type="text" placeholder="color name" value={newColor.color.color} onChange={handleNewColor}/>
+          <input name="color" type="text" placeholder= "newhex" value={newColor.color.hex} onChange={handleNewColor}/>
+          <button> add new color </button>
+
+        </div>
+      </form>
       <p>colors</p>
       <ul>
         {colors.map(color => (
@@ -105,7 +151,7 @@ const ColorList = ({ colors, updateColors }) => {
         </form>
       )}
       <div className="spacer" />
-      {/* stretch - build another form here to add a color */}
+      
     </div>
   );
 };
